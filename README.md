@@ -1,48 +1,56 @@
 Rust-Hydra
 Project Summary
 
-Rust-Hydra is a high-performance, Rust-based password testing tool inspired by Hydra. Designed for educational and authorized lab environments, it allows you to perform credential testing on HTTP, SSH, and FTP services safely. It features:
+Rust-Hydra is a high-performance, Rust-based authentication testing framework inspired by Hydra, redesigned with a modern, streaming, fault-tolerant architecture.
+It is built specifically for educational use, CTFs, and authorized lab environments, prioritising correctness, observability, and resumability over raw speed.
 
-    Asynchronous, concurrent authentication attempts
-    Modular protocol support (HTTP, SSH, FTP)
-    Hydra-style CLI compatibility
-    Automatic protocol detection (scheme, port, probe)
-    Resume and restore capabilities
-    Streaming wordlists with zero RAM growth
-    Progress bars with ETA tracking
-    Stop-on-success option
+Rather than re-implementing fragile protocol stacks, Rust-Hydra uses a modular protocol abstraction and delegates complex authentication logic to proven external tooling where appropriate (e.g. smbclient, evil-winrm), while maintaining full control over concurrency, progress tracking, and state.
 
-This project is meant for CTFs, labs, and authorized penetration tests only.
+Key Capabilities
+Asynchronous, concurrent authentication attempts (Tokio)
+Modular protocol architecture via a unified Protocol trait
+Streaming wordlists (constant RAM usage)
+Crash-safe resume & restore
+Accurate progress bars with ETA
+Stop-on-success support
+Protocol autodetection (scheme, port, probe)
+Domain-aware Windows authentication
+Safe defaults for lockout-prone services
+Designed for realistic red-team lab workflows
 
-⚠️ DO NOT USE AGAINST SYSTEMS YOU DO NOT OWN OR HAVE EXPLICIT PERMISSION TO TEST.
-✨ Features
+This project is intended only for CTFs, labs, and explicitly authorized penetration testing.
+⚠️ DO NOT USE AGAINST SYSTEMS YOU DO NOT OWN OR HAVE EXPLICIT PERMISSION TO TEST
 
-    HTTP form brute-force
-    SSH authentication
-    FTP authentication
-    RDP (NLA / CredSSP)
-    Streaming wordlists (constant RAM usage)
-    Resume / restore support
-    Progress bar + ETA
-    Multi-threaded async engine
-    Hydra-style workflow
+Features
+
+HTTP form authentication testing
+SSH authentication
+FTP authentication
+SMB (NTLM) authentication
+WinRM (HTTP / HTTPS) authentication
+Streaming wordlists (no full in-memory loading)
+Resume / restore after interruption
+Progress bar with ETA
+Async multi-threaded engine
+
+Hydra-style workflow and CLI concepts
 
 🛠 Supported Protocols
-Protocol 	Status
-HTTP Forms 	✅
-SSH 	✅
-FTP 	✅
-RDP 	✅
-SMB 	✅
-WinRM 	✅
-📦 Installation
+Protocol	Status
+HTTP Forms	✅
+SSH	✅
+FTP	✅
+SMB (NTLM)	✅
+WinRM (HTTP/HTTPS)	✅
 
-git clone https://github.com/YOUR_USERNAME/rust-hydra.git
+
+📦 Installation
+git clone https://github.com/kerravon99/rust-hydra.git
 cd rust-hydra
 cargo build --release
 
-Usage 
-HTTP Form
+Usage Examples
+HTTP Form Authentication
 ./target/release/rust-hydra http http://10.10.10.10/login \
   -L users.txt \
   -P passwords.txt \
@@ -55,61 +63,86 @@ SSH
   -L users.txt \
   -P passwords.txt
 
-RDP
-./target/release/rust-hydra rdp 10.10.10.10 \
+SMB (NTLM)
+./target/release/rust-hydra auto 10.10.10.5 \
   -L users.txt \
   -P passwords.txt \
-  -t 4
+  --domain ACME \
+  -t 1
 
-# SMB and WinRM on ToDo List.
+WinRM
+./target/release/rust-hydra winrm 10.10.10.10 \
+  -L users.txt \
+  -P passwords.txt \
+  --domain CORP \
+  --ssl \
+  -t 1
 
-Resume / Restore
+Autodetection
+./target/release/rust-hydra auto 10.10.10.10 \
+  -L users.txt \
+  -P passwords.txt
 
-Stop the tool with Ctrl+C.
-Progress will be saved automatically.
+♻️ Resume / Restore
+
+You can safely interrupt execution with Ctrl+C.
+Progress is saved automatically.
 
 Resume with:
+./target/release/rust-hydra ... --resume
 
-./rust-hydra ... --resume
+Works across:
+Crashes
+Network interruptions
+Long-running wordlists
 
-Future Development Goals
+🛣 Future Development Goals
+Short-Term
+Mysql protocol module
+Per-protocol attempt delays (--delay)
+Output file logging (-o, JSON/CSV)
+Improved error classification (network vs auth failure)
+Lockout-aware backoff
 
-Hydra .restore file compatibility
+Medium-Term
+SMB post-auth validation (share enumeration)
+WinRM post-auth command verification
+Credential reuse detection
+Per-user attempt limits
 
-Per-protocol progress bars
+Long-Term
+Kerberos-aware authentication modes
+LDAP / Active Directory support
+Credential spraying mode
+Distributed execution (multi-node)
+Plugin SDK for third-party protocols
+Blue-team simulation / detection testing mode
 
-Attempt rate limiting (requests/sec)
+⚖️ Legal & Ethical Disclaimer
+Authorized Use Only
 
-Output file logging (-o option)
-
-Hydra-style HTTP POST form syntax support
-
-Protocol autodetection fallback order
-
-Additional protocols (SMB, RDP, MySQL)
-
-Improved resume & checkpoint accuracy with streaming wordlists
-
-Advanced concurrency and queue management
-
-Legal & Ethical Disclaimer
-
-Rust-Hydra is intended solely for educational purposes and authorized environments:
-
+Rust-Hydra is intended solely for lawful security testing, including:
 TryHackMe CTFs
-
 Hack The Box labs
-
 Your own systems
-
 Explicitly authorized penetration tests
+Any use against systems you do not own or have written authorization to test is illegal.
 
-Do NOT use this tool on production systems, public websites, or networks without permission. Unauthorized access is illegal and unethical.
+No Warranty
+This software is provided “as is”, without warranty of any kind.
+The authors assume no liability for misuse, damage, account lockouts, or legal consequences.
 
-By using this software, you accept full responsibility for compliance with laws and regulations in your jurisdiction.
+User Responsibility
+By using this tool, you acknowledge that:
+You have proper authorization for all targets
 
-⚠️ Legal Disclaimer
+Authentication attacks may trigger:
+Account lockouts
+Logging and alerts
+Service disruption
 
-This tool is intended for educational purposes and authorized testing only.
-Unauthorized use against systems you do not own may be illegal.
+You accept full responsibility for compliance with applicable laws
+Final Warning
 
+If you do not have permission — do not use this tool.
+Authorization is not implied. Silence is not consent.
